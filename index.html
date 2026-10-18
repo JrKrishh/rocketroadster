@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Rocket Roadster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --cyan: #4fe3ff; --gold: #ffc65a; --red: #ff5a5a; --green: #5dff9a; --panel: rgba(8, 12, 24, 0.72); --line: rgba(120, 220, 255, 0.22); }
+  html, body { margin: 0; height: 100%; background: #05070d; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #eaf2ff; user-select: none; -webkit-user-select: none; touch-action: none; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .layer { position: fixed; inset: 0; pointer-events: none; }
+  .orb { font-family: Orbitron, sans-serif; }
+
+  /* HUD */
+  #hud { opacity: 0; transition: opacity .3s; }
+  body.in-race #hud { opacity: 1; }
+  body.in-results #hud { opacity: 0; }
+  #topbar { position: absolute; top: 16px; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 0 24px; }
+  #cname { font: 800 13px Orbitron, sans-serif; letter-spacing: 3px; color: #9fe9ff; }
+  #timed { text-align: center; }
+  #time { font: 800 38px/1 Orbitron, sans-serif; letter-spacing: 1px; text-shadow: 0 0 18px rgba(80,220,255,.45); font-variant-numeric: tabular-nums; }
+  #cpline { font: 600 11px Orbitron, sans-serif; letter-spacing: 3px; color: #9fb6d6; margin-top: 6px; }
+  #scorebox { text-align: right; }
+  #scorebox label, #cpline b { font: 600 11px Orbitron, sans-serif; letter-spacing: 3px; color: #9fb6d6; }
+  #score { font: 800 26px/1.1 Orbitron, sans-serif; font-variant-numeric: tabular-nums; }
+  #combo { margin-top: 6px; opacity: 0; transform: translateY(-4px); transition: opacity .15s, transform .15s; }
+  #combo.on { opacity: 1; transform: none; }
+  #combo-mult { font: 900 22px Orbitron, sans-serif; color: var(--gold); text-shadow: 0 0 14px rgba(255,190,80,.7); }
+  #combo-pts { font: 700 15px Orbitron, sans-serif; margin-left: 6px; }
+  #combo-track { height: 3px; width: 120px; margin: 4px 0 0 auto; background: rgba(255,255,255,.15); border-radius: 2px; overflow: hidden; }
+  #combo-bar { height: 100%; background: var(--gold); }
+  #speedo { position: absolute; right: 28px; bottom: 26px; text-align: right; }
+  #speed { font: 800 60px/0.9 Orbitron, sans-serif; letter-spacing: 1px; text-shadow: 0 0 18px rgba(80,220,255,.55); font-variant-numeric: tabular-nums; }
+  #speedo small { display: block; font: 600 12px Orbitron, sans-serif; color: #7fdfff; letter-spacing: 3px; margin-top: 6px; }
+  #gasbox { position: absolute; left: 28px; bottom: 30px; width: 220px; }
+  #gasbox label { font: 600 11px Orbitron, sans-serif; letter-spacing: 3px; color: #9fe9ff; }
+  #gastrack { margin-top: 8px; height: 10px; border-radius: 6px; background: rgba(255,255,255,.12); overflow: hidden; }
+  #gas { height: 100%; width: 100%; background: linear-gradient(90deg, #4fe3ff, #e9fbff); box-shadow: 0 0 14px #4fe3ff; }
+  #gas.low { background: linear-gradient(90deg, #ff5a5a, #ffb3b3); box-shadow: 0 0 14px #ff5a5a; }
+  #keys { position: absolute; left: 24px; top: 46px; font-size: 12px; line-height: 1.8; color: #a9b8cf; text-shadow: 0 1px 3px #000; }
+  #keys { transition: opacity 1s; } #keys.gone { opacity: 0; }
+  #keys b { color: #fff; font: 600 11px Orbitron, sans-serif; padding: 1px 6px; border: 1px solid rgba(255,255,255,.3); border-radius: 4px; margin-right: 3px; }
+  #pops { position: absolute; left: 0; right: 0; top: 24%; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .pop { font: 800 26px Orbitron, sans-serif; letter-spacing: 2px; color: #fff; text-shadow: 0 0 20px rgba(90,230,255,.9), 0 2px 0 #0a1c2a; animation: pop 1.7s ease-out forwards; white-space: nowrap; }
+  .pop.gold { color: #ffe08a; text-shadow: 0 0 20px rgba(255,200,80,.9); }
+  .pop.red { color: #ff9a9a; text-shadow: 0 0 20px rgba(255,80,80,.9); }
+  @keyframes pop { 0% { transform: scale(.4); opacity: 0 } 10% { transform: scale(1.12); opacity: 1 } 20% { transform: scale(1) } 78% { opacity: 1 } 100% { transform: translateY(-30px); opacity: 0 } }
+  #flash { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font: 900 72px Orbitron, sans-serif; letter-spacing: 4px; opacity: 0; transform: scale(.7); transition: opacity .12s, transform .12s; text-shadow: 0 0 30px rgba(90,230,255,.9); }
+  #flash.show { opacity: 1; transform: none; }
+  #flash.go { color: var(--green); text-shadow: 0 0 34px rgba(93,255,154,.9); }
+  #flash.red { color: var(--red); text-shadow: 0 0 34px rgba(255,90,90,.9); }
+  #flash.cp { font-size: 28px; top: 16%; color: var(--green); text-shadow: 0 0 24px rgba(93,255,154,.8); }
+
+  /* menu */
+  #menu { display: none; pointer-events: auto; background: linear-gradient(180deg, rgba(4,6,14,.75) 0%, rgba(4,6,14,0) 38%, rgba(4,6,14,0) 52%, rgba(4,6,14,.9) 100%); }
+  body.in-menu #menu { display: block; }
+  #title { position: absolute; top: 7vh; left: 0; right: 0; text-align: center; }
+  #title h1 { margin: 0; font: 900 clamp(34px, 7vw, 84px)/1 Orbitron, sans-serif; letter-spacing: .06em; background: linear-gradient(180deg, #fff 30%, #9fe9ff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 24px rgba(80,220,255,.45)); }
+  #title p { margin: 12px 0 0; font: 600 clamp(11px, 1.4vw, 14px) Orbitron, sans-serif; letter-spacing: .35em; color: #9fb6d6; }
+  #menu-bottom { position: absolute; left: 0; right: 0; bottom: 7vh; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 16px; }
+  #cards { display: grid; grid-template-columns: repeat(auto-fit, 158px); justify-content: center; gap: 10px; width: min(100%, 860px); }
+  .card.daily { border-color: rgba(255,198,90,.45); } .card.daily .num { color: var(--gold); } .card.daily.sel { border-color: var(--gold); box-shadow: 0 0 28px rgba(255,198,90,.3); }
+  .card { all: unset; box-sizing: border-box; cursor: pointer; padding: 10px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(6px); display: flex; flex-direction: column; gap: 3px; transition: transform .15s, border-color .15s, box-shadow .15s; }
+  .card.sel { transform: translateY(-4px); border-color: var(--cyan); box-shadow: 0 0 28px rgba(79,227,255,.28); }
+  .card .num { font: 800 11px Orbitron, sans-serif; color: var(--cyan); letter-spacing: 2px; }
+  .card .name { font: 800 14px Orbitron, sans-serif; letter-spacing: 1px; white-space: nowrap; }
+  .card .blurb { display: none; }
+  .card .stars { color: var(--gold); letter-spacing: 3px; font-size: 14px; }
+  .card .best { font: 600 10px Orbitron, sans-serif; color: #9fb6d6; letter-spacing: 1px; }
+  #detail { text-align: center; pointer-events: none; }
+  #detail .blurb { font: 600 15px Inter, sans-serif; color: #dfe9f7; text-shadow: 0 1px 8px #000; }
+  #detail .goal { margin-top: 4px; font: 600 11px Orbitron, sans-serif; letter-spacing: 2px; color: #9fb6d6; text-shadow: 0 1px 6px #000; }
+  #hintline { position: absolute; left: 0; right: 0; top: 74%; text-align: center; font: 600 14px Inter, sans-serif; color: #cfe6ff; text-shadow: 0 1px 8px #000; opacity: 0; transition: opacity .4s; }
+  #hintline.on { opacity: 1; }
+  #hint { position: absolute; bottom: 3vh; left: 0; right: 0; text-align: center; font-size: 12px; color: #7f8ea8; letter-spacing: .08em; }
+
+  /* results + pause */
+  .panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 320px; padding: 26px 30px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(10px); text-align: center; pointer-events: auto; display: none; }
+  body.in-results #results, body.paused #pause { display: block; }
+  .panel h2 { margin: 0 0 4px; font: 800 14px Orbitron, sans-serif; letter-spacing: 4px; color: #9fe9ff; }
+  #r-time { font: 900 54px/1.1 Orbitron, sans-serif; font-variant-numeric: tabular-nums; }
+  #r-score { font: 800 22px Orbitron, sans-serif; color: #cfe6ff; }
+  .rec::after { content: ' NEW BEST'; font-size: 11px; letter-spacing: 2px; color: var(--gold); vertical-align: middle; }
+  #r-stars { font-size: 44px; letter-spacing: 8px; margin: 10px 0 4px; color: rgba(255,255,255,.18); }
+  #r-stars span.on { color: var(--gold); text-shadow: 0 0 20px rgba(255,190,80,.8); display: inline-block; animation: star .5s backwards; }
+  @keyframes star { from { transform: scale(2.4) rotate(-30deg); opacity: 0 } }
+  #r-goals { list-style: none; padding: 0; margin: 6px 0 14px; font-size: 13px; color: #8c9ab3; text-align: left; display: inline-block; }
+  #r-goals li::before { content: '○ '; } #r-goals li.ok { color: #dff; } #r-goals li.ok::before { content: '● '; color: var(--gold); }
+  #r-best { font: 600 11px Orbitron, sans-serif; letter-spacing: 2px; color: #8c9ab3; margin-bottom: 16px; }
+  .btns { display: flex; gap: 10px; justify-content: center; }
+  .btn { all: unset; cursor: pointer; padding: 10px 18px; border-radius: 8px; font: 700 13px Orbitron, sans-serif; letter-spacing: 2px; border: 1px solid var(--line); background: rgba(255,255,255,.04); }
+  .btn.pri { background: var(--cyan); color: #04121a; border-color: var(--cyan); }
+  .btn:hover { border-color: var(--cyan); }
+  /* touch controls (shown once a touch is seen) */
+  #touch { display: none; position: fixed; inset: 0; pointer-events: none; }
+  body.touch.in-race:not(.paused):not(.in-results) #touch { display: block; }
+  body.touch #keys { display: none; }
+  body.touch #speedo { right: auto; left: 22px; bottom: 58px; text-align: left; }
+  body.touch #speed { font-size: 34px; } body.touch #speedo small { margin-top: 2px; }
+  #stick-zone { position: absolute; left: 0; bottom: 0; width: 48%; height: 70%; pointer-events: auto; touch-action: none; }
+  #stick { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 2px solid rgba(160,230,255,.35); background: rgba(10,20,40,.25); opacity: 0; transition: opacity .1s; pointer-events: none; }
+  #stick.on { opacity: 1; }
+  #knob { position: absolute; left: 34px; top: 34px; width: 52px; height: 52px; border-radius: 50%; background: rgba(160,230,255,.55); box-shadow: 0 0 18px rgba(80,220,255,.6); }
+  .tbtn { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 12px Orbitron, sans-serif; letter-spacing: 1px; color: #eaf6ff; background: rgba(10,20,40,.45); border: 2px solid rgba(160,230,255,.4); pointer-events: auto; touch-action: none; backdrop-filter: blur(4px); }
+  .tbtn.down { background: rgba(79,227,255,.45); border-color: var(--cyan); }
+  #t-hop { width: 92px; height: 92px; right: max(18px, env(safe-area-inset-right)); bottom: 26px; }
+  #t-boost { width: 78px; height: 78px; right: calc(max(18px, env(safe-area-inset-right)) + 104px); bottom: 54px; }
+  #t-brake { width: 62px; height: 62px; right: calc(max(18px, env(safe-area-inset-right)) + 14px); bottom: 134px; font-size: 10px; }
+  #t-reset, #t-pause { width: 44px; height: 44px; top: 64px; font-size: 16px; }
+  #t-reset { right: 74px; } #t-pause { right: 20px; }
+  @media (max-width: 640px) {
+    #keys { display: none; }
+    #time { font-size: 28px; } #score { font-size: 20px; } #speed { font-size: 40px; }
+    #cname { font-size: 10px; letter-spacing: 1px; max-width: 90px; } #scorebox label { font-size: 9px; letter-spacing: 1px; } #cpline { font-size: 9px; letter-spacing: 1px; }
+    #gasbox { width: 140px; left: 16px; } #speedo { right: 16px; } #topbar { padding: 0 14px; }
+    #menu-bottom { bottom: 3vh; gap: 8px; } #cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; }
+    .card { padding: 7px 10px; } .card .name { font-size: 12px; } .card .best { font-size: 9px; }
+    #detail .blurb { font-size: 13px; } #hint { display: none; }
+    .pop { font-size: 18px; } #flash { font-size: 54px; }
+  }
+</style>
+  <script type="module" crossorigin src="./assets/index-CmpBcPci.js"></script>
+</head>
+<body class="in-menu">
+<canvas id="c"></canvas>
+
+<div class="layer" id="hud">
+  <div id="topbar">
+    <div><div id="cname"></div></div>
+    <div id="timed"><div id="time">0:00.00</div><div id="cpline"><b>CHECKPOINT</b> <span id="cp">0/0</span></div></div>
+    <div id="scorebox"><label>STUNT POINTS</label><div id="score">0</div>
+      <div id="combo"><span id="combo-mult">x1</span><span id="combo-pts">0</span><div id="combo-track"><div id="combo-bar"></div></div></div></div>
+  </div>
+  <div id="keys"><b>W A S D</b>drive · <b>SHIFT</b>thrust · <b>SPACE</b>hop / hover<br>in the air: <b>W S</b>flip <b>A D</b>roll <b>Q E</b>spin · <b>R</b>checkpoint · <b>ESC</b>pause</div>
+  <div id="pops"></div>
+  <div id="flash"></div>
+  <div id="hintline"></div>
+  <div id="gasbox"><label>COLD GAS</label><div id="gastrack"><div id="gas"></div></div></div>
+  <div id="speedo"><div id="speed">0</div><small>KM/H</small></div>
+</div>
+
+<div id="touch">
+  <div id="stick-zone"></div>
+  <div id="stick"><div id="knob"></div></div>
+  <div class="tbtn" id="t-hop">HOP</div>
+  <div class="tbtn" id="t-boost">BOOST</div>
+  <div class="tbtn" id="t-brake">BRAKE</div>
+  <div class="tbtn" id="t-reset">↺</div>
+  <div class="tbtn" id="t-pause">❚❚</div>
+</div>
+
+<div class="layer" id="menu">
+  <div id="title"><h1>ROCKET ROADSTER</h1><p>IT DRIVES · IT STICKS · IT FLIES</p></div>
+  <div id="menu-bottom">
+    <div id="detail"><div class="blurb" id="d-blurb"></div><div class="goal" id="d-goal"></div></div>
+    <div id="cards"></div>
+  </div>
+  <div id="hint">← → choose · ENTER drive · M mute · N music · drive up walls, through loops, upside down · thrusters let you fly</div>
+</div>
+
+<div class="layer">
+  <div class="panel" id="results">
+    <h2 id="r-name"></h2>
+    <div id="r-time">0:00.00</div>
+    <div id="r-score">0</div>
+    <div id="r-stars"></div>
+    <ul id="r-goals"></ul>
+    <div id="r-best"></div>
+    <div class="btns"><button class="btn" id="r-menu">MENU</button><button class="btn" id="r-retry">RETRY</button><button class="btn pri" id="r-next">NEXT</button></div>
+  </div>
+  <div class="panel" id="pause">
+    <h2>PAUSED</h2>
+    <div class="btns" style="margin-top:16px"><button class="btn" id="p-menu">MENU</button><button class="btn" id="p-restart">RESTART</button><button class="btn pri" id="p-resume">RESUME</button></div>
+  </div>
+</div>
+</body>
+</html>
