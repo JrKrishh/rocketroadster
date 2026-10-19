@@ -79,6 +79,16 @@
   /* results + pause */
   .panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 320px; padding: 26px 30px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(10px); text-align: center; pointer-events: auto; display: none; }
   body.in-results #results, body.paused #pause { display: block; }
+  body.in-settings #settings { display: block; z-index: 5; } body.in-settings #pause { display: none; }
+  #settings { width: min(380px, calc(100vw - 32px)); box-sizing: border-box; text-align: left; }
+  #settings h2 { text-align: center; margin-bottom: 14px; }
+  .set { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; margin-bottom: 14px; }
+  .set span { font: 600 11px Orbitron, sans-serif; letter-spacing: 2px; color: #cfe6ff; }
+  .set b { font: 700 12px Orbitron, sans-serif; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .set input { grid-column: 1 / -1; width: 100%; accent-color: var(--cyan); height: 28px; margin: 0; }
+  .set-hint { font-size: 12px; color: #8c9ab3; margin: 0 0 16px; text-align: center; }
+  #m-settings { position: absolute; top: 18px; right: 18px; pointer-events: auto; font-size: 11px; padding: 8px 12px; background: var(--panel); }
+  .btns { flex-wrap: wrap; }
   .panel h2 { margin: 0 0 4px; font: 800 14px Orbitron, sans-serif; letter-spacing: 4px; color: #9fe9ff; }
   #r-time { font: 900 54px/1.1 Orbitron, sans-serif; font-variant-numeric: tabular-nums; }
   #r-score { font: 800 22px Orbitron, sans-serif; color: #cfe6ff; }
@@ -121,7 +131,7 @@
     .pop { font-size: 18px; } #flash { font-size: 54px; }
   }
 </style>
-  <script type="module" crossorigin src="./assets/index-VQOdxzLr.js"></script>
+  <script type="module" crossorigin src="./assets/index-DKZEyv1k.js"></script>
 </head>
 <body class="in-menu">
 <canvas id="c"></canvas>
@@ -158,6 +168,7 @@
     <div id="cards"></div>
   </div>
   <div id="hint">← → choose · ENTER drive · M mute · N music · drive up walls, through loops, upside down · thrusters let you fly</div>
+  <button class="btn" id="m-settings">⚙ SETTINGS</button>
 </div>
 
 <div class="layer">
@@ -172,7 +183,15 @@
   </div>
   <div class="panel" id="pause">
     <h2>PAUSED</h2>
-    <div class="btns" style="margin-top:16px"><button class="btn" id="p-menu">MENU</button><button class="btn" id="p-restart">RESTART</button><button class="btn pri" id="p-resume">RESUME</button></div>
+    <div class="btns" style="margin-top:16px"><button class="btn" id="p-menu">MENU</button><button class="btn" id="p-restart">RESTART</button><button class="btn" id="p-settings">SETTINGS</button><button class="btn pri" id="p-resume">RESUME</button></div>
+  </div>
+  <div class="panel" id="settings">
+    <h2>SETTINGS</h2>
+    <label class="set"><span>STEERING SENSITIVITY</span><b id="v-steer">1.00×</b><input type="range" id="s-steer" min="0.4" max="1.6" step="0.05"></label>
+    <label class="set"><span>AIR FLIP / ROLL SPEED</span><b id="v-air">1.00×</b><input type="range" id="s-air" min="0.4" max="1.6" step="0.05"></label>
+    <label class="set"><span>CAMERA FOLLOW</span><b id="v-camera">1.00×</b><input type="range" id="s-camera" min="0.4" max="1.6" step="0.05"></label>
+    <p class="set-hint">Lower is calmer, higher is sharper. Saved on this device.</p>
+    <div class="btns"><button class="btn" id="s-reset">RESET</button><button class="btn pri" id="s-done">DONE</button></div>
   </div>
 </div>
 </body>
